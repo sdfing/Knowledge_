@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+
+    <title>滑动切换的注册登录界面</title>
+    <link rel="stylesheet" href="static\css\81.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="form-box">
+            <!-- 注册 -->
+            <div class="teacher-box hidden">
+                <h1>teacher</h1>
+                <input type="text" placeholder="用户名">
+                <input type="number" placeholder="工号">
+                <input type="password" placeholder="密码">
+                <button>教师登录</button>
+            </div>
+            <!-- 登录 -->
+            <div class="student-box">
+                <h1>student</h1>
+                <input type="text" placeholder="用户名">
+                <input type="number" placeholder="学号">
+                <input type="password" placeholder="密码">
+                <button>学生登录</button>
+            </div>
+        </div>
+        <div class="con-box left">
+            <h2>欢迎使用<span>知识图谱</span></h2>
+            <p>请教师管理您的<span>课程图谱</span></p>
+            <img src="static\graph\1.jpg" alt=""><!--该行是图片1所在地-->
+            <p>我是学生？</p>
+            <button id="student">学生登录</button>
+        </div>
+        <div class="con-box right">
+            <h2>欢迎来到<span>知识图谱</span></h2>
+            <p>请同学们查看你的<span>知识图谱</span>吧</p>
+            <img src="static\graph\戴拿.jpg" alt=""><!--该行是图片2所在地-->
+            <p>我是教师？</p>
+            <button id="teacher">教师登录</button>
+        </div>
+    </div>
+    <script>
+        // 要操作到的元素
+        let student=document.getElementById('student');
+        let teacher=document.getElementById('teacher');
+        let form_box=document.getElementsByClassName('form-box')[0];
+        let teacher_box=document.getElementsByClassName('teacher-box')[0];
+        let student_box=document.getElementsByClassName('student-box')[0];
+        // 去注册按钮点击事件
+        teacher.addEventListener('click',()=>{
+            form_box.style.transform='translateX(80%)';
+            student_box.classList.add('hidden');
+            teacher_box.classList.remove('hidden');
+        })
+        // 去登录按钮点击事件
+        student.addEventListener('click',()=>{
+            form_box.style.transform='translateX(0%)';
+            teacher_box.classList.add('hidden');
+            student_box.classList.remove('hidden');
+        })
+    </script>
+</body>
+
+</html>
