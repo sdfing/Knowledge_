@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Graph</title>
+    <!-- 引入cytoscape.js库 -->
+    <script  type="text/javascript" src="static\js\cytoscape.min.js"></script>
+    <!-- 引入jquery库 -->
+    <script src="https://unpkg.com/jquery/dist/jquery.min.js"></script>
+    <style>
+        #cy {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #layout{
+            position:absolute;
+            top: 10px;
+            left: 10px;
+
+        }
+        #toggle{
+            position:absolute;
+            top: 50px;
+            left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="cy"></div>
+    <!-- 添加一个下拉菜单，让用户可以选择不同的布局算法 -->
+    <select id="layout">
+        <option value="grid">Grid</option>
+        <option value="circle">Circle</option>
+        <option value="cose">Cose</option>
+        <option value="random">Random</option>
+    </select>
+    <!-- 添加一个checkbox按钮，让用户可以控制二级知识点的隐藏或者显现 -->
+    <div id="toggle">
+        <input type="checkbox" id="show-sub" checked>
+        <label for="show-sub">显示二级知识点</label>
+    </div>
+    <script>
+        // 创建一个cytoscape对象
+        var cy = cytoscape({
+            container: document.getElementById('cy'),
+            // 设置你的有向图的样式和属性，你可以根据你的喜好进行修改
+            style: [
+                {
+                    selector: 'node',
+                    style: {
+                        'background-color': '#666',
+                        'label': 'data(name)', // 使用节点数据中的name属性作为节点的标签
+                        'text-valign': 'center', // 垂直居中
+                        'text-halign': 'center' // 水平居中
+
+
+                    }
+                },
+                {
+                    selector: 'edge',
+                    style: {
+                        'width': 3,
+                        'line-color': '#ccc',
+                        'target-arrow-color': '#ccc',
+                        'target-arrow-shape': 'triangle',// 你可以选择不同的形状，例如'chevron', 'tee', 'circle'等
+                        'curve-style': 'bezier',
+                    }
+                }
+            ],
+            layout: {
+                name: 'grid', // 使用 Grid 布局算法
+                animate: true, // 是否启用动画效果
+                randomize: true // 是否随机化节点位置
+            }
+        });
+
+        // 从后端获取有向图数据
+        $.getJSON('/graphInfo', function(data) {
+            // 添加点和边到cytoscape对象中
+            cy.add(data);
+            // 重新布局有向图
+            cy.layout({name: 'grid'}).run();
+            // 添加一些交互功能，例如缩放，拖动，高亮等，你可以根据你的需求进行修改
+            cy.on('tap', 'node', function(evt) {
+                var node = evt.target;
+                // 高亮被点击的节点和它的邻居
+                cy.elements().removeClass('highlighted');
+                node.addClass('highlighted');
+                node.neighborhood().addClass('highlighted');
+                // 显示被点击的节点的信息，例如id，入度，出度等，你可以根据你的需求进行修改
+                var info = 'Node: ' + node.data('name') + '\n';
+                info += 'In-degree: ' + node.indegree() + '\n';
+                info += 'Out-degree: ' + node.outdegree() + '\n';
+                alert(info);
+            });
+        });
+
+        // 当用户选择不同的布局算法时，改变你的有向图的布局
+        $('#layout').on('change', function() {
+            // 获取用户选择的布局算法
+            var layoutName = $(this).val();
+            // 创建一个布局对象，指定算法和其他参数，你可以根据你的需求进行修改
+            var layout = cy.layout({
+                name: layoutName,
+                animate: true, // 是否使用动画效果
+                fit: true // 是否让有向图适应容器的大小
+            });
+            // 运行布局算法
+            layout.run();
+
+        });
+
+        // 当用户点击checkbox按钮时，控制二级知识点的隐藏或者显现
+        $('#show-sub').on('change', function() {
+            // 获取用户选择的按钮状态
+            var checked = $(this).prop('checked');
+            // 获取所有的二级知识点的元素，即入度大于0，而且出度等于0的元素
+            var subNodes = cy.filter(function(ele) {
+                return ele.isNode() && ele.outdegree() == 1 && ele.indegree() == 0;
+            });
+            // 根据按钮状态来隐藏或者显示二级知识点
+            if (checked) {
+                // 如果按钮被选中，就显示二级知识点
+                subNodes.show();
+            } else {
+                // 如果按钮被取消选中，就隐藏二级知识点
+                subNodes.hide();
+            }
+        });
+    </script>
+</body>
+</html>
