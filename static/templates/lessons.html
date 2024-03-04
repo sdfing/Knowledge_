@@ -1,0 +1,15 @@
+<!-- index.html -->
+<html>
+<head>
+    <title>多课程管理系统</title>
+</head>
+<body>
+    <h1>欢迎来到多课程管理系统</h1>
+    <p>请选择你想要浏览的课程：</p>
+    <ul>
+        {% for course in courses %}
+        <li><a href="{{ url_for('course_detail', course_id=course.id) }}">{{ course.name }}</a></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

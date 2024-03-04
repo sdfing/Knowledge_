@@ -1,0 +1,19 @@
+<!-- course_detail.html -->
+<html>
+<head>
+    <title>{{ course.name }}</title>
+</head>
+<body>
+    <h1>{{ course.name }}</h1>
+    <p>{{ course.description }}</p>
+    <p>教师：{{ course.teacher }}</p>
+    <p><a href="{{ url_for('index') }}">返回首页</a></p>
+    <h2>修改课程信息</h2>
+    <form action="{{ url_for('course_detail', course_id=course.id) }}" method="POST">
+        <p>课程名：<input type="text" name="name" value="{{ course.name }}"></p>
+        <p>课程描述：<textarea name="description">{{ course.description }}</textarea></p>
+        <p>课程教师：<input type="text" name="teacher" value="{{ course.teacher }}"></p>
+        <p><input type="submit" value="提交修改"></p>
+    </form>
+</body>
+</html>

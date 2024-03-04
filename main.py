@@ -1,6 +1,7 @@
 # 导入flask库
 from flask import Flask, jsonify, render_template
-from flask_sqlalchemy import SQLAlchemy
+from flask import redirect,url_for,request
+from database import db
 
 # 导入定义的有向图类
 from graph import DiGraph
@@ -11,7 +12,8 @@ from graph import DiGraph
 # 创建一个flask应用对象
 app = Flask(__name__, template_folder='./static/templates')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Asd12345@127.0.0.1:3306/aaa'
-db = SQLAlchemy(app)
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(app)
 
 lesson_set = ('数据结构', '高等数学', '程序设计基础')  # 一共有多少课程，To Do:后续可以将此处数据库化，通过管理员用户动态添加课程
 graph_set = set()  # 知识图谱们
@@ -68,6 +70,17 @@ def lessons():
     courses = Course.query.all()  # 查询所有的课程
     return render_template('index.html', courses=courses)  # 渲染首页模板，传入课程列表
 
+@app.route('/course/<int:course_id>', methods=['GET', 'POST'])
+def course_detail(course_id):
+    from course import Course
+    course = Course.query.get_or_404(course_id) # 根据课程id查询课程，如果不存在则返回404错误
+    if request.method == 'POST': # 如果是POST请求，说明用户提交了修改表单
+        course.name = request.form.get('name') # 从表单中获取新的课程名
+        course.description = request.form.get('description') # 从表单中获取新的课程描述
+        course.teacher = request.form.get('teacher') # 从表单中获取新的课程教师
+        db.session.commit() # 提交数据库变更
+        return redirect(url_for('course_detail', course_id=course.id)) # 重定向到课程详情页面
+    return render_template('course_detail.html', course=course) # 如果是GET请求，渲染课程详情模板，传入课程对象
 
 
 

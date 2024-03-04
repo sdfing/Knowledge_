@@ -1,5 +1,6 @@
 # models.py
-from main import db
+from main import app
+from database import db
 
 class Course(db.Model):
     id = db.Column(db.Integer, primary_key=True)
