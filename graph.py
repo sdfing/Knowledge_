@@ -96,7 +96,7 @@ class DiGraph:
                         # 获取该列对应的一级知识点的前驱知识点
                         pre_k = df.loc[df['一级知识点'] == k, col].values[0]
                         # 如果前驱知识点不为空
-                        if not pd.isnull(pre_k):
+                        if not pd.isnull(pre_k) and pre_k != " ":
                             # 如果前驱知识点不在字典中，就添加它
                             if pre_k not in name_to_id:
                                 self.add_node(pre_k)
@@ -118,7 +118,7 @@ class DiGraph:
                         # 获取该列对应的一级知识点所包含的二级知识点
                         sub_k = df.loc[df['一级知识点'] == k, col].values[0]
                         # 如果二级知识点不为空
-                        if not pd.isnull(sub_k):
+                        if not pd.isnull(sub_k) and sub_k != " ":
                             # 如果二级知识点不在字典中，就添加它
                             if sub_k not in name_to_id:
                                 self.add_node(sub_k)
