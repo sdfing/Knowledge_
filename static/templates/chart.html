@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>选课信息</title>
+    <!-- 引入Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-3">
+        <h2>选课信息表</h2>
+        <table class="table table-bordered table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>班级</th>
+                    <th>学号</th>
+                    <th>姓名</th>
+                    <th>课程名称</th>
+                    <!-- 其他表头... -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for enrollment in enrollments %}
+                <tr>
+                    <td>{{ enrollment.class_id }}</td>
+                    <td>{{ enrollment.student_id }}</td>
+                    <td>{{ enrollment.name }}</td>
+                    <td>{{ enrollment.course_name }}</td>
+                    <!-- 其他数据列... -->
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <!-- 引入Bootstrap JS 和 Popper.js -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

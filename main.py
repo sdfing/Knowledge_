@@ -1,11 +1,12 @@
 # 导入flask库
 from flask import Flask, jsonify, render_template
-from flask import redirect,url_for,request
-from database import db
+from flask import redirect, url_for, request
 
+from course import Course
+from database import db
+from enrollment import Enrollment
 # 导入定义的有向图类
 from graph import DiGraph
-
 
 # 迫真主函数，来自c++的恶臭编程习惯，主启动部分要写的都写在这，免得东一块西一块
 ########################################################################
@@ -20,6 +21,7 @@ graph_set = set()  # 知识图谱们
 for ls in lesson_set:
     g = DiGraph(ls)
     g.read_from_excel("data/KlgPts.xlsx")  # TO DO:此处后续使用数据库进行优化，并提供动态编辑扩充知识图谱功能
+
 
 ##############################################################################
 
@@ -63,28 +65,64 @@ def graphInfo():
     # 返回你的有向图数据，用一个JSON格式表示
     return jsonify(elements)
 
+
 # 这个路由的用处是显示所有的课程
 @app.route('/lessons')
 def lessons():
-    from course import Course
     courses = Course.query.all()  # 查询所有的课程
-    return render_template('index.html', courses=courses)  # 渲染首页模板，传入课程列表
+    return render_template('lessons.html', courses=courses)  # 渲染首页模板，传入课程列表
+
 
 @app.route('/course/<int:course_id>', methods=['GET', 'POST'])
 def course_detail(course_id):
-    from course import Course
-    course = Course.query.get_or_404(course_id) # 根据课程id查询课程，如果不存在则返回404错误
-    if request.method == 'POST': # 如果是POST请求，说明用户提交了修改表单
-        course.name = request.form.get('name') # 从表单中获取新的课程名
-        course.description = request.form.get('description') # 从表单中获取新的课程描述
-        course.teacher = request.form.get('teacher') # 从表单中获取新的课程教师
-        db.session.commit() # 提交数据库变更
-        return redirect(url_for('course_detail', course_id=course.id)) # 重定向到课程详情页面
-    return render_template('course_detail.html', course=course) # 如果是GET请求，渲染课程详情模板，传入课程对象
+    course = Course.query.get_or_404(course_id)  # 根据课程id查询课程，如果不存在则返回404错误
+    if request.method == 'POST':  # 如果是POST请求，说明用户提交了修改表单
+        course.name = request.form.get('name')  # 从表单中获取新的课程名
+        course.description = request.form.get('description')  # 从表单中获取新的课程描述
+        course.teacher = request.form.get('teacher')  # 从表单中获取新的课程教师
+        db.session.commit()  # 提交数据库变更
+        return redirect(url_for('course_detail', course_id=course.id))  # 重定向到课程详情页面
+    return render_template('course_detail.html', course=course)  # 如果是GET请求，渲染课程详情模板，传入课程对象
 
 
+@app.route('/students/<major>', methods=['GET'])
+def get_students_by_major(major):
+    enrollments = Enrollment.query.filter_by(major=major).all()
+    return render_template('chart.html', enrollments=enrollments)
+
+
+@app.route('/students/average_gpa/<major>', methods=['GET'])
+def get_students_average_gpa(major):
+    from sqlalchemy import text
+    sql_query = text("""
+        SELECT 
+            学号, 
+            姓名, 
+            专业, 
+            SUM(学分绩点) / SUM(学分) AS 平均学分绩点
+        FROM 
+            enrollment
+        WHERE 
+            
+            专业 = :major
+        GROUP BY 
+            学号, 姓名, 专业
+        ORDER BY 
+            平均学分绩点 DESC
+    """)
+    db_results = db.session.execute(sql_query, {'major': major})
+    results = list(db_results)
+
+    for i in range( len(results)):
+        results[i] = list(results[i])
+        results[i].append(i+1)
+
+    return render_template('rank_gpa.html', results=results)
 
 
 # 如果这个文件是主程序，就运行flask应用
 if __name__ == '__main__':
     app.run(debug=True)
+    db.create_all()
+    # from dataTrans import trans
+    # trans('data/all_2021.xlsx')
