@@ -136,3 +136,10 @@ class DiGraph:
 
 
 
+# 创建一个有向图对象
+g = DiGraph("数据结构")
+# 实际数据是一个excel，所以还是用函数喵
+g.read_from_excel("data/KlgPts.xlsx")
+
+
+

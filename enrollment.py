@@ -1,8 +1,10 @@
 from database import db
+
+
 class Enrollment(db.Model):
-    __table_name__ = 'enrollment'  # 表名选课表
+    __tablename__ = 'enrollment'  # 表名选课表
     class_id = db.Column(db.String(255), name='班级')
-    student_id = db.Column(db.String(255), primary_key=True,name='学号')
+    student_id = db.Column(db.String(255), primary_key=True, name='学号')
     name = db.Column(db.String(255), name='姓名')
     course_name = db.Column(db.String(255), name='课程名称')
     grade = db.Column(db.String(255), name='成绩')
@@ -36,3 +38,29 @@ class Enrollment(db.Model):
     remark_info = db.Column(db.String(255), name='备注信息', nullable=True)
     credit_point = db.Column(db.Float, name='学分绩点', nullable=True)
     course_type = db.Column(db.String(255), name='开课类型')
+
+    def rank_avg_gpa(self, major):
+        from sqlalchemy import text
+        sql_query = text("""
+               SELECT 
+                   学号, 
+                   姓名, 
+                   专业, 
+                   SUM(学分绩点) / SUM(学分) AS 平均学分绩点
+               FROM 
+                   enrollment
+               WHERE 
+
+                   专业 = :major
+               GROUP BY 
+                   学号, 姓名, 专业
+               ORDER BY 
+                   平均学分绩点 DESC
+           """)
+        db_results = db.session.execute(sql_query, {'major': major})
+        results = list(db_results)
+
+        for i in range(len(results)):
+            results[i] = list(results[i])
+            results[i].append(i + 1)
+        return results
