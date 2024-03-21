@@ -3,7 +3,7 @@
 <head>
     <title>Graph</title>
     <!-- 引入cytoscape.js库 -->
-    <script  type="text/javascript" src="static\js\cytoscape.min.js"></script>
+    <script type="text/javascript" src="static\js\cytoscape.min.js"></script>
     <!-- 引入jquery库 -->
     <script src="https://unpkg.com/jquery/dist/jquery.min.js"></script>
     <style>
@@ -25,23 +25,24 @@
             top: 50px;
             left: 10px;
         }
+
     </style>
 </head>
 <body>
-    <div id="cy"></div>
-    <!-- 添加一个下拉菜单，让用户可以选择不同的布局算法 -->
-    <select id="layout">
-        <option value="grid">Grid</option>
-        <option value="circle">Circle</option>
-        <option value="cose">Cose</option>
-        <option value="random">Random</option>
-    </select>
-    <!-- 添加一个checkbox按钮，让用户可以控制二级知识点的隐藏或者显现 -->
-    <div id="toggle">
-        <input type="checkbox" id="show-sub" checked>
-        <label for="show-sub">显示二级知识点</label>
-    </div>
-    <script>
+<div id="cy"></div>
+<!-- 添加一个下拉菜单，让用户可以选择不同的布局算法 -->
+<select id="layout">
+    <option value="grid">Grid</option>
+    <option value="circle">Circle</option>
+    <option value="cose">Cose</option>
+    <option value="random">Random</option>
+</select>
+<!-- 添加一个checkbox按钮，让用户可以控制二级知识点的隐藏或者显现 -->
+<div id="toggle">
+    <input type="checkbox" id="show-sub" checked>
+    <label for="show-sub">显示二级知识点</label>
+</div>
+<script>
         // 创建一个cytoscape对象
         var cy = cytoscape({
             container: document.getElementById('cy'),
@@ -129,6 +130,41 @@
                 subNodes.hide();
             }
         });
-    </script>
+
+
+    // 假设你已经创建了cytoscape实例并添加了节点
+    $.ajax({
+        url: '/get_student_knowledge/' + '213401040113',
+        type: 'GET',
+        success: function(data) {
+            // 遍历返回的数据
+            data.forEach(function(knowledge) {
+                // 获取节点
+                var node = cy.getElementById(knowledge.knowledge_point);
+                // 根据分数设置颜色
+                var color = getScoreColor(knowledge.score);
+                // 更新节点样式
+                node.style('background-color', color);
+            });
+        }
+    });
+
+    // 根据分数获取颜色的函数
+    function getScoreColor(score) {
+        if (score === -1) {
+            return 'grey'; // 未考察
+        } else if (score < 60) {
+            return `rgb(${255 - score}, ${score}, ${score})`; // 红色，分数越低红色越红
+        } else if (score >= 60 && score < 80) {
+            return `rgb(${score}, ${score}, 255)`; // 蓝色，分数越高蓝色越深
+        } else if (score >= 80 && score < 100) {
+            return `rgb(${score}, 255, ${score})`; // 绿色，分数越高颜色越绿
+        } else {
+            return 'gold'; // 满分
+        }
+    }
+
+
+</script>
 </body>
 </html>

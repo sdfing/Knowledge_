@@ -1,4 +1,4 @@
-import students
+import student
 import pandas as pd
 
 

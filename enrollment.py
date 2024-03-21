@@ -39,7 +39,7 @@ class Enrollment(db.Model):
     credit_point = db.Column(db.Float, name='学分绩点', nullable=True)
     course_type = db.Column(db.String(255), name='开课类型')
 
-    def rank_avg_gpa(self, major):
+    def rank_avg_gpa(self, major, grade):
         from sqlalchemy import text
         sql_query = text("""
                SELECT 
@@ -50,14 +50,14 @@ class Enrollment(db.Model):
                FROM 
                    enrollment
                WHERE 
-
+                   年级 = :grade AND
                    专业 = :major
                GROUP BY 
                    学号, 姓名, 专业
                ORDER BY 
                    平均学分绩点 DESC
            """)
-        db_results = db.session.execute(sql_query, {'major': major})
+        db_results = db.session.execute(sql_query, {'major': major, 'grade': grade})
         results = list(db_results)
 
         for i in range(len(results)):

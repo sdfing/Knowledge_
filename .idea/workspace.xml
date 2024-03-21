@@ -4,25 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7a6b8d6c-8616-4f7b-bd62-35982a6902a6" name="更改" comment="debug">
-      <change afterPath="$PROJECT_DIR$/.idea/Knowledge_.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data/knowledge_points.xlsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data/knowledge_points.xlsx.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data/original_data.xlsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data/student_knowledge.xlsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data/student_knowledge.xlsx.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/studentKnowledge.py" afterDir="false" />
+    <list default="true" id="7a6b8d6c-8616-4f7b-bd62-35982a6902a6" name="更改" comment="did sth">
+      <change afterPath="$PROJECT_DIR$/knowledgePoints.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/all_2021.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/all_2021.xlsx.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/all_2023.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/all_2023.xlsx.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/新建 文本文档.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataTrans.py" beforeDir="false" afterPath="$PROJECT_DIR$/dataTrans.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/knowledge_points.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/knowledge_points.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/knowledge_points.xlsx.csv" beforeDir="false" afterPath="$PROJECT_DIR$/data/knowledge_points.xlsx.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/enrollment.py" beforeDir="false" afterPath="$PROJECT_DIR$/enrollment.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/graph.py" beforeDir="false" afterPath="$PROJECT_DIR$/graph.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/students.py" beforeDir="false" afterPath="$PROJECT_DIR$/students.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/templates/graph.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/templates/graph.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studentKnowledge.py" beforeDir="false" afterPath="$PROJECT_DIR$/studentKnowledge.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/students.py" beforeDir="false" afterPath="$PROJECT_DIR$/student.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -177,7 +169,14 @@
       <option name="project" value="LOCAL" />
       <updated>1710585429258</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="did sth">
+      <created>1710991772555</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1710991772555</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -218,6 +217,7 @@
     <MESSAGE value="2" />
     <MESSAGE value="debug,解决莫名其妙的空点问题" />
     <MESSAGE value="debug" />
-    <option name="LAST_COMMIT_MESSAGE" value="debug" />
+    <MESSAGE value="did sth" />
+    <option name="LAST_COMMIT_MESSAGE" value="did sth" />
   </component>
 </project>

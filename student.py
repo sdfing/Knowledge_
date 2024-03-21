@@ -2,6 +2,7 @@
 from werkzeug.security import generate_password_hash
 from database import db
 from sqlalchemy import text
+from sqlalchemy.orm import relationship
 
 
 class Student(db.Model):
@@ -11,6 +12,7 @@ class Student(db.Model):
     password_hash = db.Column(db.String(255), name='登录密码')
     major = db.Column(db.String(255), name='专业')
     class_id = db.Column(db.String(255), name='班级')
+    # knowledge_scores = relationship('StudentKnowledge', back_populates='student')
 
 
     # ... 其他个人信息字段 ...
