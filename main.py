@@ -1,15 +1,13 @@
 # 导入flask库
 from flask import Flask, jsonify, render_template
 from flask import redirect, url_for, request
+from sqlalchemy import text
 
 from course import Course
 from database import db
 from enrollment import Enrollment
 from graph import g
-from studentKnowledge import StudentKnowledge
 from student import extract_and_save_student_info
-from knowledgePoints import KnowledgePoints
-from sqlalchemy import text
 
 # 迫真主函数，来自c++的恶臭编程习惯，主启动部分要写的都写在这，免得东一块西一块
 ########################################################################
@@ -64,24 +62,23 @@ def graphInfo():
 @app.route('/get_student_scores/<student_id>', methods=['GET'])
 def get_student_scores(student_id):
     query = text("""
-        SELECT kp.知识点id AS knowledge_id, kp.知识点名称 AS knowledge_name, sk.分数 AS score 
-        FROM student_knowledge sk 
-        JOIN knowledge_point kp ON sk.知识点id = kp.知识点id 
-        JOIN student s ON sk.学号 = s.学号 
-        WHERE s.学号 = :student_number
+        SELECT  kp.知识点id, kp.知识点名称, sk.分数
+        FROM student s
+        JOIN student_knowledge sk ON s.学号 = sk.学号
+        JOIN knowledge_point kp ON sk.知识点id = kp.知识点id
+        WHERE s.学号 = :student_id;
     """)
-    result = db.session.execute(query, {'student_number': student_id})
-
-    knowledge_list = []
+    result = db.session.execute(query, {'student_id': student_id})
+    result_list = []
     for row in result:
-        knowledge_list.append({
-            'knowledge_id': row.knowledge_id,
-            'knowledge_name': row.knowledge_name,
-            'score': row.score
-        })
-
+        tmp = dict()
+        tmp['id'] = row[0]
+        tmp['名称'] = row[1]
+        tmp['分数'] = row[2]
+        result_list.append(tmp)
     # 返回JSON数据
-    return jsonify(knowledge_list)
+    return jsonify(result_list)
+
 
 # 这个路由的用处是显示所有的课程
 @app.route('/lessons')
