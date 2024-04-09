@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Graph</title>
     <!-- 引入cytoscape.js库 -->
     <script type="text/javascript" src="static\js\cytoscape.min.js"></script>
+    <script type="text/javascript" src="static\js\cytoscape-node-html-label.min.js"></script>
     <!-- 引入jquery库 -->
-    <script src="https://unpkg.com/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="static\js\jquery.min.js"></script>
     <style>
         #cy {
             width: 100%;
@@ -14,92 +16,399 @@
             top: 0;
             left: 0;
         }
-        #layout{
-            position:absolute;
+
+        #layout {
+            position: absolute;
             top: 10px;
             left: 10px;
 
         }
-        #toggle{
-            position:absolute;
+
+        #toggle {
+            position: absolute;
             top: 50px;
             left: 10px;
+            color: antiquewhite;
         }
 
+        body {
+            background-image: url('static/graph/OIP.jpg');
+            /* background: linear-gradient(200deg,rgb(0, 0, 0),antiquewhite) */
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 9999;
+        }
+
+        #background-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+
+        @keyframes shine {
+            0% {
+                box-shadow: 0 0 5px rgba(255, 215, 0, 0.8);
+            }
+
+            50% {
+                box-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
+            }
+
+            100% {
+                box-shadow: 0 0 5px rgba(255, 215, 0, 0.8);
+            }
+        }
+
+        .full-score {
+            animation: shine 2s ease-in-out infinite;
+        }
+
+        #music-toggle {
+            position: absolute;
+            top: 40px;
+            left: 10px;
+            /* padding: 10px 20px; */
+            background-color: #f0f0f0;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+
+        #music-toggle:hover {
+            background-color: #e0e0e0;
+        }
     </style>
 </head>
+
 <body>
-<div id="cy"></div>
-<!-- 添加一个下拉菜单，让用户可以选择不同的布局算法 -->
-<select id="layout">
-    <option value="grid">Grid</option>
-    <option value="circle">Circle</option>
-    <option value="cose">Cose</option>
-    <option value="random">Random</option>
-</select>
-<!-- 添加一个checkbox按钮，让用户可以控制二级知识点的隐藏或者显现 -->
-<div id="toggle">
-    <input type="checkbox" id="show-sub" checked>
-    <label for="show-sub">显示二级知识点</label>
-</div>
-<script>
+
+    <div id="cy"></div>
+    <!-- 添加一个下拉菜单，让用户可以选择不同的布局算法 -->
+    <select id="layout">
+        <option value="cose">Cose</option>
+        <option value="circle">Circle</option>
+        <option value="grid">Grid</option>
+        <option value="random">Random</option>
+
+    </select>
+
+    <button id="music-toggle">Toggle Music</button>
+
+    <div id="loading">加载中...</div>
+
+    <!-- 添加一个checkbox按钮，让用户可以控制二级知识点的隐藏或者显现 -->
+    <!-- <div id="toggle">
+        <input type="checkbox" id="show-sub" checked>
+        <label for="show-sub">显示二级知识点</label>
+    </div> -->
+
+    <audio id="background-music" autoplay loop >
+        <source src="static/audio/universe.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <video id="background-video" autoplay loop muted>
+        <source src="static/video/a.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <script>
+        // 获取音频元素和控制按钮
+        var backgroundMusic = document.getElementById('background-music');
+        var musicToggle = document.getElementById('music-toggle');
+
+        // 更新按钮文本
+        function updateButtonText() {
+            if (backgroundMusic.paused) {
+                musicToggle.textContent = 'Play Music';
+            } else {
+                musicToggle.textContent = 'Pause Music';
+            }
+        }
+
+        // 页面加载完成后自动播放音乐并更新按钮文本
+        window.addEventListener('load', function () {
+            backgroundMusic.play();
+            updateButtonText();
+        });
+
+        // 添加点击事件处理程序
+        musicToggle.addEventListener('click', function () {
+            if (backgroundMusic.paused) {
+                backgroundMusic.play();
+            } else {
+                backgroundMusic.pause();
+            }
+            updateButtonText();
+        });
+
+
+        //知识图谱部分从此开始
+        var mainNodeDiameter = 20;
+        var otherNodesDiameter = 17;
+        var layoutCoseOptions = {
+            name: 'cose',
+            padding: 100,
+            nodeOverlap: 10,
+            idealEdgeLength: function (edge) {
+                switch (edge.data().type) {
+                    case 1:
+                        return 30;
+                    case 2:
+                    case 3:
+                        return 120;
+                    case 0:
+                    default:
+                        return 45;
+                }
+            },
+            edgeElasticity: function (edge) {
+                switch (edge.data().type) {
+                    case 1:
+                        return 50;
+                    case 2:
+                    case 3:
+                        return 200;
+                    case 0:
+                    default:
+                        return 100;
+                }
+            },
+            nestingFactor: 1.2,
+            initialTemp: 1000,
+            coolingFactor: 0.99,
+            minTemp: 1.0,
+            gravity: 1.4
+        };
+
+
+        var DefaultLayoutOption = {
+            name: 'cose', // 使用 Cose 布局算法
+            animate: true, // 是否启用动画效果
+            randomize: false, // 是否随机化节点位置
+            nodeRepulsion: 1000000,
+        };
+
+
         // 创建一个cytoscape对象
         var cy = cytoscape({
             container: document.getElementById('cy'),
-            // 设置你的有向图的样式和属性，你可以根据你的喜好进行修改
+            minZoom: 0.1,
+            maxZoom: 3,
+            zoom: 0.5,
             style: [
                 {
                     selector: 'node',
                     style: {
-                        'background-color': '#666',
-                        'label': 'data(name)', // 使用节点数据中的name属性作为节点的标签
-                        'text-valign': 'center', // 垂直居中
-                        'text-halign': 'center' // 水平居中
-
-
+                        "width": mainNodeDiameter + "px",
+                        "height": mainNodeDiameter + "px",
+                        "overlay-padding": "5px",
+                        "overlay-opacity": 0,
+                        "z-index": 10,
+                        "border-width": 2,
+                        "border-opacity": 0,
+                        'label': 'data(name)', // 设置标签为节点数据中的'name'字段
+                        'text-valign': 'top', // 垂直对齐文本
+                        'text-halign': 'center', // 水平对齐文本
+                        'text-wrap': 'wrap', // 允许文本换行
+                        'text-max-width': '60px', // 设置最大文本宽度
+                        'text-margin-y': '-8px',
+                        'font-size': 12,
+                        'color': '#ffffff',
                     }
                 },
                 {
                     selector: 'edge',
                     style: {
-                        'width': 3,
-                        'line-color': '#ccc',
-                        'target-arrow-color': '#ccc',
-                        'target-arrow-shape': 'triangle',// 你可以选择不同的形状，例如'chevron', 'tee', 'circle'等
-                        'curve-style': 'bezier',
+                        "curve-style": "unbundled-bezier",
+                        "control-point-distance": 30,
+                        "control-point-weight": 0.5,
+                        "opacity": 0.9,
+                        "overlay-padding": "3px",
+                        "overlay-opacity": 0,
+                        // "label": "data[title]",
+                        "font-family": "FreeSet,Arial,sans-serif",
+                        "font-size": 9,
+                        "font-weight": "bold",
+                        "text-background-opacity": 1,
+                        "text-background-color": "#ffffff",
+                        "text-background-padding": 3,
+                        "text-background-shape": "roundrectangle",
+                        "width": 1
                     }
                 }
-            ],
-            layout: {
-                name: 'grid', // 使用 Grid 布局算法
-                animate: true, // 是否启用动画效果
-                randomize: true // 是否随机化节点位置
-            }
+            ]
         });
 
-        // 从后端获取有向图数据
-        $.getJSON('/graphInfo', function(data) {
-            // 添加点和边到cytoscape对象中
-            cy.add(data);
-            // 重新布局有向图
-            cy.layout({name: 'grid'}).run();
-            // 添加一些交互功能，例如缩放，拖动，高亮等，你可以根据你的需求进行修改
-            cy.on('tap', 'node', function(evt) {
-                var node = evt.target;
-                // 高亮被点击的节点和它的邻居
-                cy.elements().removeClass('highlighted');
-                node.addClass('highlighted');
-                node.neighborhood().addClass('highlighted');
-                // 显示被点击的节点的信息，例如id，入度，出度等，你可以根据你的需求进行修改
-                var info = 'Node: ' + node.data('name') + '\n';
-                info += 'In-degree: ' + node.indegree() + '\n';
-                info += 'Out-degree: ' + node.outdegree() + '\n';
-                alert(info);
+
+
+
+
+
+        // // 从后端获取有向图数据
+        // $.getJSON('/graphInfo', function (data) {
+        //     // 添加点和边到cytoscape对象中
+        //     cy.add(data);
+        //     // 重新布局有向图
+        //     cy.layout({ name: 'cose', nodeRepulsion: 100000 }).run();
+
+        // });
+        // // 假设你已经创建了cytoscape实例并添加了节点
+        // $.ajax({
+        //     url: '/get_student_knowledge/' + '223401010220',
+        //     type: 'GET',
+        //     success: function (data) {
+        //         //ar dataList = JSON.parse(data)
+        //         //console.log(dataList);
+        //         // 遍历返回的数据
+        //         data.forEach(function (knowledge) {
+        //             // 获取节点
+        //             var node = cy.getElementById(knowledge.id);
+        //             // 根据分数设置颜色
+        //             var color = getScoreColor(knowledge.分数);
+        //             // 更新节点样式
+        //             //console.log(knowledge.分数)
+        //             node.data('originalColor', color);
+        //             node.data('score', knowledge.分数);
+        //             node.style('background-color', color);
+        //         });
+        //         //updateLabels();
+        //         //updateLayout();
+        //         cy.nodeHtmlLabel('refresh');
+        //         //cy.layout({ name: 'cose' }).run();
+        //         cy.animate({
+        //             zoom: 1
+        //         }, {
+        //             duration: 1300
+        //         });
+
+        //     }
+        // });
+
+
+
+        // 定义一个获取图数据的函数
+        function getGraphData() {
+            return new Promise(function (resolve, reject) {
+                $.getJSON('/graphInfo', function (data) {
+                    resolve(data);
+                });
             });
-        });
+        }
+
+        // 定义一个获取学生知识点数据的函数
+        function getStudentKnowledge() {
+            return new Promise(function (resolve, reject) {
+                $.ajax({
+                    url: '/get_student_knowledge/' + '223401010220',
+                    type: 'GET',
+                    success: function (data) {
+                        resolve(data);
+                    }
+                });
+            });
+        }
+
+        // 显示加载中的标志
+        $('#loading').show();
+
+        // 使用 Promise.all 等待所有异步请求完成
+        Promise.all([getGraphData(), getStudentKnowledge()])
+            .then(function (results) {
+                var graphData = results[0];
+                var studentKnowledge = results[1];
+
+                // 将图数据添加到 Cytoscape 中
+                cy.add(graphData);
+
+                // 隐藏所有的节点和边
+                cy.elements().hide();
+
+                // 更新节点样式和数据
+                studentKnowledge.forEach(function (knowledge) {
+                    var node = cy.getElementById(knowledge.id);
+                    var color = getScoreColor(knowledge.分数);
+                    var gradient = getScoreGradient(knowledge.分数);
+                    node.data('originalColor', color);
+                    node.data('score', knowledge.分数);
+                    node.style('background-color', color);
+                });
+
+                // 更新布局
+                cy.layout(DefaultLayoutOption).run();
+
+                // 在布局完成后显示所有的节点和边，并进行缩放动画
+                cy.one('layoutstop', function () {
+                    $('#loading').hide();
+                    cy.elements().show();
+                    cy.animate({
+                        zoom: 1
+                    }, {
+                        duration: 1300
+                    });
+                    cy.nodeHtmlLabel([{
+                        query: 'node',
+                        valignBox: 'center',
+                        halignBox: 'center',
+                        valign: 'center',
+                        halign: 'center',
+                        cssClass: 'node-html-label',
+                        tpl: function (data) {
+                            var cssClass = data.score === 100 ? 'full-score' : '';
+                            return `<div class="${cssClass}" style="background: ${getScoreGradient(data.score)}; width:${mainNodeDiameter}px; height: ${mainNodeDiameter}px; border-radius: 50%;"></div>`;
+                        }
+                    }]);
+
+                });
+            })
+            .catch(function (error) {
+                console.error('Error:', error);
+            });
+
+
+
+        // cy.nodeHtmlLabel([{
+        //     query: 'node',
+        //     valignBox: 'center',
+        //     halignBox: 'center',
+        //     valign: 'center',
+        //     halign: 'center',
+        //     cssClass: 'node-html-label',
+        //     tpl: function (data) {
+        //         return `<div style="background: ${getScoreGradient(data.score)}; width:${mainNodeDiameter}px; height: ${mainNodeDiameter}px; border-radius: 50%;"></div>`;
+        //     }
+        // }]);
+
+
+        // // 省略节点文字
+        // cy.nodes().forEach(node => {
+        //     const originalText = node.data('name');
+        //     if (originalText.length > 5) {
+        //         const truncatedText = originalText.substring(0, 5) + '...';
+        //         node.data('name', truncatedText);
+        //     }
+        // });
+
 
         // 当用户选择不同的布局算法时，改变你的有向图的布局
-        $('#layout').on('change', function() {
+        $('#layout').on('change', function () {
             // 获取用户选择的布局算法
             var layoutName = $(this).val();
             // 创建一个布局对象，指定算法和其他参数，你可以根据你的需求进行修改
@@ -114,11 +423,11 @@
         });
 
         // 当用户点击checkbox按钮时，控制二级知识点的隐藏或者显现
-        $('#show-sub').on('change', function() {
+        $('#show-sub').on('change', function () {
             // 获取用户选择的按钮状态
             var checked = $(this).prop('checked');
             // 获取所有的二级知识点的元素，即入度大于0，而且出度等于0的元素
-            var subNodes = cy.filter(function(ele) {
+            var subNodes = cy.filter(function (ele) {
                 return ele.isNode() && ele.outdegree() == 1 && ele.indegree() == 0;
             });
             // 根据按钮状态来隐藏或者显示二级知识点
@@ -132,39 +441,86 @@
         });
 
 
-    // 假设你已经创建了cytoscape实例并添加了节点
-    $.ajax({
-        url: '/get_student_knowledge/' + '223401040113',
-        type: 'GET',
-        success: function(data) {
-            // 遍历返回的数据
-            data.forEach(function(knowledge) {
-                // 获取节点
-                var node = cy.getElementById(knowledge.knowledge_point);
-                // 根据分数设置颜色
-                var color = getScoreColor(knowledge.score);
-                // 更新节点样式
-                node.style('background-color', color);
+
+        // 根据分数获取颜色的函数
+        function getScoreColor(score) {
+            if (score === -1) {
+                return 'grey'; // 未考察
+            } else if (score < 60) {
+                return `rgb(${255 - score}, ${score}, ${score})`; // 红色，分数越低红色越红
+            } else if (score >= 60 && score < 80) {
+                return `rgb(${score}, ${score}, 255)`; // 蓝色，分数越高蓝色越深
+            } else if (score >= 80 && score < 100) {
+                return `rgb(${score}, 255, ${score})`; // 绿色，分数越高颜色越绿
+            } else {
+                return 'gold'; // 满分
+            }
+        }
+
+        //节点背景渐变效果
+        function getScoreGradient(score) {
+            if (score === -1) {
+                return 'linear-gradient(to bottom right, #9999, black)';
+            } else if (score < 60) {
+                return `linear-gradient(to bottom right, rgb(${255 - score}, ${score}, ${score}), black)`;
+            } else if (score >= 60 && score < 80) {
+                return `linear-gradient(to bottom right, rgb(${score}, ${score}, 255), grey)`;
+            } else if (score >= 80 && score < 100) {
+                return `linear-gradient(to bottom right, rgb(${score}, 255, ${score}), antiquewhite)`;
+            } else {
+                return 'linear-gradient(to bottom right, gold, white)';
+            }
+        }
+
+        cy.on('mouseover', 'node', function (evt) {
+            var node = evt.target;
+            // node.style('background-color', 'antiquewhite');
+            node.style('width', (10 + mainNodeDiameter) + 'px');
+            node.style('height', (10 + mainNodeDiameter) + 'px');
+        });
+        cy.on('mouseout', 'node', function (evt) {
+            var node = evt.target;
+            // node.style('background-color', node.data('originalColor'));
+            node.style('width', mainNodeDiameter + 'px');
+            node.style('height', mainNodeDiameter + 'px');
+        })
+        cy.on('tap', 'node', function (evt) {
+            var node = evt.target;
+            node.animate({
+                style: {
+                    'background-color': 'orange',
+                    'width': (20 + mainNodeDiameter) + 'px',
+                    'height': (20 + mainNodeDiameter) + 'px'
+                }
+            }, {
+                duration: 500,
+                complete: function () {
+                    node.animate({
+                        style: {
+                            'background-color': node.data('originalColor'),
+                            'width': mainNodeDiameter + 'px',
+                            'height': mainNodeDiameter + 'px'
+                        }
+                    }, {
+                        duration: 500
+                    });
+                }
             });
-        }
-    });
-
-    // 根据分数获取颜色的函数
-    function getScoreColor(score) {
-        if (score === -1) {
-            return 'grey'; // 未考察
-        } else if (score < 60) {
-            return `rgb(${255 - score}, ${score}, ${score})`; // 红色，分数越低红色越红
-        } else if (score >= 60 && score < 80) {
-            return `rgb(${score}, ${score}, 255)`; // 蓝色，分数越高蓝色越深
-        } else if (score >= 80 && score < 100) {
-            return `rgb(${score}, 255, ${score})`; // 绿色，分数越高颜色越绿
-        } else {
-            return 'gold'; // 满分
-        }
-    }
+            // 高亮被点击的节点和它的邻居
+            // cy.elements().removeClass('highlighted');
+            // node.addClass('highlighted');
+            // node.neighborhood().addClass('highlighted');
+            // 显示被点击的节点的信息，例如id，入度，出度等，你可以根据你的需求进行修改
+            var info = 'Node: ' + node.data('name') + '\n';
+            info += 'In-degree: ' + node.indegree() + '\n';
+            info += 'Out-degree: ' + node.outdegree() + '\n';
+            info += '分数：' + node.data('score') + '\n';
+            alert(info);
+        });
 
 
-</script>
+
+    </script>
 </body>
+
 </html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Radar and Line Graphs with Tables</title>
+    <!-- 引入 AntV G2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@antv/g2plot/dist/g2plot.min.css" />
+
+    <!-- 引入 AntV G2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@antv/g2plot/dist/g2plot.min.js"></script>
+
+    <style>
+        .container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .graph-container, .table-container {
+            width: 50%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid black;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="graph-container">
+        <div id="lineGraph" style="width: 100%; height: 500px;"></div>
+    </div>
+    <div class="table-container">
+        <table id="lineTable">
+            <thead>
+            <tr>
+                <th>课程</th>
+                <th>刘可嘉</th>
+                <th>扬子江</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- 折线图表格数据 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="container">
+    <div class="graph-container">
+        <div id="radarContainer" style="width: 100%; height: 500px;"></div>
+    </div>
+    <div class="table-container">
+        <table id="radarTable">
+            <thead>
+            <tr>
+                <th>课程</th>
+                <th>刘可嘉</th>
+                <th>扬子江</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- 雷达图表格数据 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    var data1 = [
+        { item: '数据结构', type: '刘可嘉', score: 70 },
+        { item: '数据结构', type: '扬子江', score: 30 },
+        { item: '马原', type: '刘可嘉', score: 60 },
+        { item: '马原', type: '扬子江', score: 70 },
+        { item: 'C++', type: '刘可嘉', score: 50 },
+        { item: 'C++', type: '扬子江', score: 60 },
+        { item: 'Python', type: '刘可嘉', score: 40 },
+        { item: 'Python', type: '扬子江', score: 50 },
+        { item: '毛概', type: '刘可嘉', score: 60 },
+        { item: '毛概', type: '扬子江', score: 70 },
+        { item: 'CSP', type: '刘可嘉', score: 70 },
+        { item: 'CSP', type: '扬子江', score: 50 },
+        { item: '线性代数', type: '刘可嘉', score: 65 },
+        { item: '线性代数', type: '扬子江', score: 75 },
+        { item: '微积分', type: '刘可嘉', score: 55 },
+        { item: '微积分', type: '扬子江', score: 80 },
+        { item: '物理', type: '刘可嘉', score: 45 },
+        { item: '物理', type: '扬子江', score: 60 },
+        { item: '化学', type: '刘可嘉', score: 50 },
+        { item: '化学', type: '扬子江', score: 65 }
+    ];
+
+    var data = [
+        { item: '数据结构', '刘可嘉': 70, '扬子江': 30 },
+        { item: '马原', '刘可嘉': 60, '扬子江': 70 },
+        { item: 'C++', '刘可嘉': 50, '扬子江': 60 },
+        { item: 'Python', '刘可嘉': 40, '扬子江': 50 },
+        { item: '毛概', '刘可嘉': 60, '扬子江': 70 },
+        { item: 'CSP', '刘可嘉': 70, '扬子江': 50 },
+        { item: '线性代数', '刘可嘉': 65, '扬子江': 75 },
+        { item: '微积分', '刘可嘉': 55, '扬子江': 80 },
+        { item: '物理', '刘可嘉': 45, '扬子江': 60 },
+        { item: '化学', '刘可嘉': 50, '扬子江': 65 }
+    ];
+
+    // 折线图配置
+    var lineConfig = {
+        data: data1,
+        xField: 'item',
+        yField: 'score',
+        seriesField: 'type',
+        smooth: true,
+    };
+    var lineGraph = new G2Plot.Line('lineGraph', lineConfig);
+    lineGraph.render();
+
+    // 雷达图配置
+    var radarData = [];
+    data.forEach(function (record) {
+        Object.keys(record).forEach(function (key) {
+            if (key !== 'item') {
+                radarData.push({
+                    item: record.item,
+                    type: key,
+                    score: record[key]
+                });
+            }
+        });
+    });
+    var radarConfig = {
+        data: radarData,
+        xField: 'item',
+        yField: 'score',
+        seriesField: 'type',
+        // ...其他配置...
+    };
+    new G2Plot.Radar('radarContainer', radarConfig).render();
+
+    // 创建两个表格
+    function createTable(tableId, data) {
+        var tableData = data.map(function (record) {
+            return {
+                course: record.item,
+                '刘可嘉': record['刘可嘉'],
+                '扬子江': record['扬子江']
+            };
+        });
+
+        var tbody = document.getElementById(tableId).getElementsByTagName('tbody')[0];
+        tableData.forEach(function (row) {
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td>' + row.course + '</td>' +
+                '<td>' + row['刘可嘉'] + '</td>' +
+                '<td>' + row['扬子江'] + '</td>';
+            tbody.appendChild(tr);
+        });
+    }
+
+    createTable('lineTable', data);
+    createTable('radarTable', data);
+</script>
+
+</body>
+</html>
