@@ -1,13 +1,15 @@
 # 导入flask库
-from flask import Flask, jsonify, render_template
+from flask import Flask, render_template
 from flask import redirect, url_for, request
 from sqlalchemy import text
 
-from course import Course
 from database import db
-from enrollment import Enrollment
+from models import Course, Enrollment,KnowledgePoint, KnowledgePointEdge
+# 有向图结构
+from flask import jsonify
 from graph import g
-from student import extract_and_save_student_info
+
+
 
 # 迫真主函数，来自c++的恶臭编程习惯，主启动部分要写的都写在这，免得东一块西一块
 ########################################################################
@@ -18,16 +20,15 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
 
-# from dataTrans import trans
-# trans('data/knowledge_points.xlsx')
-
+# dodododo('data/22总表_updated.xlsx')
 
 ##############################################################################
 
 # 登录登录
 @app.route('/')
-def login():
-    return render_template('login.html')
+def default():
+    g.save_to_database()
+    return 'all done all fine'
 
 
 # 知识图谱喵
@@ -36,30 +37,48 @@ def index():
     return render_template('graph.html')
 
 
-# 有向图结构
-@app.route('/graphInfo')
-def graphInfo():
-    # 假设实际数据是一个列表，每个元素是一个字典，包含一个点的id和它的前驱节点的id列表
-    # 可以根据你的数据格式进行修改
-    # data = [{'id': 'a', 'predecessors': []}, {'id': 'b', 'predecessors': ['a']}, {'id': 'c', 'predecessors': ['a', 'b']},{'id':'d','predecessors':['c']}]
 
-    # 遍历数据，添加点和边到有向图对象中
-    # for node in data:
-    #     g.add_node(node['id']) # 添加点
-    #     for pred in node['predecessors']:
-    #         g.add_edge(pred, node['id']) # 添加边
 
-    # 从有向图对象中获取点和边的数据，转换成Cytoscape.js可以识别的格式
-    nodes = [{'data': {'id': node, 'name': g.name[node]}} for node in
-             g.get_nodes()]  # 把节点数据中的name属性加入到cytoscape的数据中，用来显示中文标签
-    edges = [{'data': {'source': edge[0], 'target': edge[1]}} for edge in g.get_edges()]
+@app.route('/graphInfo/<course_id>')
+def graphInfo(course_id):
+    course_name = course_id  # 假设你想查询"数据结构"课程的知识点图
+
+    # 查询所有知识点
+    knowledge_points = KnowledgePoint.query.filter_by(KnowledgeBelong=course_name).all()
+
+    # 构建节点数据
+    nodes = []
+    for kp in knowledge_points:
+        node = {
+            'data': {
+                'id': kp.KnowledgeID,
+                'name': kp.KnowledgeName
+            }
+        }
+        nodes.append(node)
+
+    # 查询所有知识点边
+    knowledge_point_edges = KnowledgePointEdge.query.filter_by(KnowledgeBelong=course_name).all()
+
+    # 构建边数据
+    edges = []
+    for edge in knowledge_point_edges:
+        edge_data = {
+            'data': {
+                'source': edge.sourceID,
+                'target': edge.targetID
+            }
+        }
+        edges.append(edge_data)
+
+    # 将节点和边数据合并
     elements = nodes + edges
 
-    # 返回你的有向图数据，用一个JSON格式表示
+    # 返回 JSON 格式的数据
     return jsonify(elements)
 
 
-@app.route('/get_student_scores/<student_id>', methods=['GET'])
+@app.route('/get_student_knowledge/<student_id>', methods=['GET'])
 def get_student_scores(student_id):
     query = text("""
         SELECT  kp.知识点id, kp.知识点名称, sk.分数
@@ -114,10 +133,12 @@ def get_students_average_gpa(major, grade):
 
 @app.route('/student')
 def student_main():
-    extract_and_save_student_info()
+    # extract_and_save_student_info()
+    pass
 
 
 # 如果这个文件是主程序，就运行flask应用
 if __name__ == '__main__':
     app.run(debug=True)
-    db.create_all()
+
+

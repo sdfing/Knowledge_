@@ -12,13 +12,15 @@ def trans(name):
     pass
 
 
-def dodododo():
+def dodododo(original_data):
+    import pandas as pd
+
     # 假设您的原始数据Excel文件名为'original_data.xlsx'
     # 假设您的知识点Excel文件名为'knowledge_points.xlsx'
     # 假设您的学生知识点Excel文件名为'student_knowledge.xlsx'
 
     # 读取原始数据
-    original_data_df = pd.read_excel('data/original_data.xlsx')
+    original_data_df = pd.read_excel(original_data)
 
     # 读取知识点数据
     knowledge_points_df = pd.read_excel('data/knowledge_points.xlsx')
@@ -34,7 +36,7 @@ def dodododo():
         # 检查原始数据中是否有该知识点的列
         if knowledge_point_name in original_data_df.columns:
             # 提取该知识点的分数数据
-            scores = original_data_df[['学号', knowledge_point_name]]
+            scores = original_data_df[['学号', knowledge_point_name]].copy()
             scores.rename(columns={knowledge_point_name: '分数'}, inplace=True)
             scores['知识点id'] = knowledge_point_id
 
@@ -45,5 +47,8 @@ def dodododo():
     student_knowledge_df.reset_index(drop=True, inplace=True)
 
     # 将学生知识点数据保存到Excel文件
-    student_knowledge_df.to_excel('student_knowledge.xlsx', index=False)
-    student_knowledge_df.to_csv('student_knowledge.xlsx' + '.csv', encoding='utf-8', index=False)
+    student_knowledge_df.to_excel('data/student_knowledge.xlsx', index=False)
+    student_knowledge_df.to_csv('data/student_knowledge.xlsx' + '.csv', encoding='utf-8', index=False)
+
+def trytry():
+    pass
