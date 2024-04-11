@@ -20,14 +20,18 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
 
-# dodododo('data/22总表_updated.xlsx')
+
 
 ##############################################################################
 
 # 登录登录
 @app.route('/')
 def default():
-    g.save_to_database()
+    #g.save_to_database()
+    # from dataTrans import dodododo
+    # dodododo('21总表_updated','2022-2023')
+
+    Course.extract_and_save_course_info()
     return 'all done all fine'
 
 
@@ -42,41 +46,34 @@ def index():
 @app.route('/graphInfo/<course_id>')
 def graphInfo(course_id):
     course_name = course_id  # 假设你想查询"数据结构"课程的知识点图
-
     # 查询所有知识点
     knowledge_points = KnowledgePoint.query.filter_by(KnowledgeBelong=course_name).all()
-
     # 构建节点数据
     nodes = []
     for kp in knowledge_points:
         node = {
             'data': {
-                'id': kp.KnowledgeID,
+                'id': str(kp.KnowledgeID),
                 'name': kp.KnowledgeName
             }
         }
         nodes.append(node)
-
     # 查询所有知识点边
     knowledge_point_edges = KnowledgePointEdge.query.filter_by(KnowledgeBelong=course_name).all()
-
     # 构建边数据
     edges = []
     for edge in knowledge_point_edges:
         edge_data = {
             'data': {
-                'source': edge.sourceID,
-                'target': edge.targetID
+                'source': str(edge.sourceID),
+                'target': str(edge.targetID)
             }
         }
         edges.append(edge_data)
-
     # 将节点和边数据合并
     elements = nodes + edges
-
     # 返回 JSON 格式的数据
     return jsonify(elements)
-
 
 @app.route('/get_student_knowledge/<student_id>', methods=['GET'])
 def get_student_scores(student_id):
@@ -91,7 +88,7 @@ def get_student_scores(student_id):
     result_list = []
     for row in result:
         tmp = dict()
-        tmp['id'] = row[0]
+        tmp['id'] = str(row[0])
         tmp['名称'] = row[1]
         tmp['分数'] = row[2]
         result_list.append(tmp)
@@ -126,8 +123,7 @@ def get_students_by_major(major):
 
 @app.route('/student/average_gpa/<grade>/<major>', methods=['GET'])
 def get_students_average_gpa(major, grade):
-    enrollments = Enrollment()
-    results = enrollments.rank_avg_gpa(major, grade)
+    results = Enrollment.rank_avg_gpa(major, grade)
     return render_template('rank_gpa.html', results=results)
 
 
