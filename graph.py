@@ -14,6 +14,7 @@ class DiGraph:
         self.name = dict()  # 存储每个点的中文名字，用一个字典表示，键是点，值是一个字符串
         # self.current_id = 0  # 存储当前的id值，用一个整数表示，初始值为0
         self.lessonName = lesson_name  # 表明这个有向图从属于哪个课程
+        self.chapter = dict()  # 存储每个节点的章节信息
 
     # 添加一个点
     def add_node(self, name, id):
@@ -78,7 +79,9 @@ class DiGraph:
             # 插入新记录
             for node in self.nodes:
                 name = self.name[node]
-                knowledge_point = KnowledgePoint(KnowledgeID=node, KnowledgeName=name, KnowledgeBelong=self.lessonName)
+                chapter = self.chapter[node]  # 获取章节信息
+                knowledge_point = KnowledgePoint(KnowledgeID=node, KnowledgeName=name, KnowledgeBelong=self.lessonName,
+                                                 Chapter=chapter)  # 添加章节字段
                 db.session.add(knowledge_point)
             db.session.flush()
 
@@ -96,16 +99,20 @@ class DiGraph:
         # 读取Excel文件
         df = pd.read_excel(file_name)
         # 检查知识点列是否存在
-        if '一级知识点' in df.columns:
-            KlgPtL1 = df['一级知识点'].tolist()  # 获取一级知识点的列表
+        if '章节' in df.columns and '一级知识点' in df.columns:
+            # 获取章节和一级知识点的列表
+            chapters = df['章节'].tolist()
+            KlgPtL1 = df['一级知识点'].tolist()
             # 创建一个字典，用来存储每个中文名字对应的id
             name_to_id = dict()
             # 遍历每个一级知识点
-            for k in KlgPtL1:
+            for i, k in enumerate(KlgPtL1):
                 # 获取该顶点的id
                 id = worker.get_id()
-                # 添加一个新的顶点，并给它赋值name属性
-                self.add_node(k, id)
+                # 获取对应的章节
+                chapter = chapters[i]
+                # 添加一个新的顶点，并给它赋值name属性和chapter属性
+                self.add_node(k, id, chapter)
                 # 把该顶点的中文名字和id存入字典中
                 name_to_id[k] = id
                 # 获取该知识点的前驱知识点的列名
@@ -122,7 +129,7 @@ class DiGraph:
                             if pre_k not in name_to_id:
                                 # 获取前驱知识点的id
                                 pre_id = worker.get_id()
-                                self.add_node(pre_k, pre_id)
+                                self.add_node(pre_k, pre_id, chapter)
                                 # 把前驱知识点的中文名字和id存入字典中
                                 name_to_id[pre_k] = pre_id
                             else:
@@ -144,7 +151,7 @@ class DiGraph:
                             if sub_k not in name_to_id:
                                 # 获取二级知识点的id
                                 sub_id = worker.get_id()
-                                self.add_node(sub_k, sub_id)
+                                self.add_node(sub_k, sub_id, chapter)
                                 # 把二级知识点的中文名字和id存入字典中
                                 name_to_id[sub_k] = sub_id
                             else:
@@ -155,8 +162,17 @@ class DiGraph:
         else:
             print("Error: One or more required columns are missing.")
 
+    # 添加一个点
+    def add_node(self, name, id, chapter):
+        node = id
+        self.nodes.add(node)
+        self.edges[node] = set()
+        self.in_edges[node] = set()
+        self.name[node] = name
+        self.chapter[node] = chapter  # 存储章节信息
+
 
 # 创建一个有向图对象
 g = DiGraph("数据结构")
-# 实际数据是一个excel，所以还是用函数喵
-g.read_from_excel("data/KlgPts.xlsx")
+# # 实际数据是一个excel，所以还是用函数喵
+# g.read_from_excel("data/KlgPts.xlsx")

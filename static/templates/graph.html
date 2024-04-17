@@ -304,10 +304,19 @@
 
 
 
+         // 从 URL 查询参数中获取课程名称和学号
+        function getQueryParam(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        const courseName = getQueryParam('course');
+        const studentId = getQueryParam('student');
+
         // 定义一个获取图数据的函数
         function getGraphData() {
             return new Promise(function (resolve, reject) {
-                $.getJSON('/graphInfo/数据结构', function (data) {
+                $.getJSON('/graphInfo/' + encodeURIComponent(courseName), function (data) {
                     resolve(data);
                 });
             });
@@ -317,7 +326,7 @@
         function getStudentKnowledge() {
             return new Promise(function (resolve, reject) {
                 $.ajax({
-                    url: '/get_student_knowledge/' + '223401010220',
+                    url: '/get_student_knowledge/' + encodeURIComponent(studentId),
                     type: 'GET',
                     success: function (data) {
                         resolve(data);

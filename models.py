@@ -1,14 +1,28 @@
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from database import db
 from sqlalchemy import text
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
 
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, index=True)
+    password_hash = db.Column(db.String(128))
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+
 class Course(db.Model):
     __tablename__ = 'course'
     id = db.Column(db.Integer, primary_key=True, name='课程代码')
     name = db.Column(db.String(64), unique=True, nullable=False, name='课程名称')
+
     # ... other course fields ...
 
     @staticmethod
@@ -45,6 +59,7 @@ class Course(db.Model):
     def __repr__(self):
         return '<Course %r>' % self.name
 
+
 class Student(db.Model):
     __tablename__ = 'student'  # 学生表名
     student_id = db.Column(db.String(255), primary_key=True, name='学号')
@@ -52,6 +67,7 @@ class Student(db.Model):
     password_hash = db.Column(db.String(255), name='登录密码')
     major = db.Column(db.String(255), name='专业')
     class_id = db.Column(db.String(255), name='班级')
+    gender = db.Column(db.String(255), name='性别')
 
     # knowledge_scores = relationship('StudentKnowledge', back_populates='student')
 
@@ -98,7 +114,8 @@ class Student(db.Model):
                 学号,
                 姓名,
                 专业,
-                班级
+                班级,
+                性别
             FROM
                 enrollment
         """)
@@ -106,7 +123,7 @@ class Student(db.Model):
 
         # 遍历查询结果，为每个学生创建或更新记录
         for row in results:
-            student_id, name, major, class_id = row
+            student_id, name, major, class_id, gender = row
             # 检查学生是否已存在
             existing_student = Student.query.filter_by(student_id=student_id).first()
             if not existing_student:
@@ -115,7 +132,8 @@ class Student(db.Model):
                     student_id=student_id,
                     name=name,
                     major=major,
-                    class_id=class_id
+                    class_id=class_id,
+                    gender=gender
                 )
                 # 设置一个默认密码，实际应用中应该让用户自己设置或生成随机密码
                 default_password = 'default_password'
@@ -131,6 +149,7 @@ class KnowledgePoint(db.Model):
     __tablename__ = 'knowledge_point'
     KnowledgeID = db.Column(db.Integer, name='知识点id', primary_key=True)
     KnowledgeName = db.Column(db.String(255), name='知识点名称', unique=True)
+    Chapter = db.Column(db.String, name='章节', primary_key=True)
     KnowledgeBelong = db.Column(db.String(255), name='所属课程')
 
 
@@ -181,8 +200,7 @@ class Enrollment(db.Model):
     course_type = db.Column(db.String(255), name='开课类型')
 
     @staticmethod
-    def rank_avg_gpa(self, major, grade):
-        from sqlalchemy import text
+    def rank_avg_gpa(major, grade):
         sql_query = text("""
                SELECT 
                    学号, 
@@ -206,3 +224,162 @@ class Enrollment(db.Model):
             results[i] = list(results[i])
             results[i].append(i + 1)
         return results
+
+    @staticmethod
+    def map_score(score):
+        if score == '优':
+            return 95
+        elif score == '良':
+            return 85
+        elif score == '中':
+            return 75
+        elif score == '及格':
+            return 65
+        elif score == '不及格' or score == '缓考':
+            return 0
+        else:
+            try:
+                score = float(score)
+                return score
+            except ValueError:
+                return None
+
+    @staticmethod
+    def get_violin_data_roughly(grade_year, course_name_search, major, semester, academic_year, is_exam_course,
+                                exam_nature):
+        grade_year = '%' + grade_year + '%'
+        course_name_search = '%' + course_name_search + '%'
+        major = '%' + major + '%'
+        semester = '%' + semester + '%'
+        academic_year = '%' + academic_year + '%'
+
+        sql_query = text("""
+               SELECT 
+                   班级,
+                   成绩,
+                   课程名称
+               FROM 
+                   enrollment
+               WHERE 
+                   年级 LIKE :grade_year AND
+                   课程名称 LIKE :course_name_search AND
+                   专业 LIKE :major AND
+                   学期 LIKE :semester AND
+                   学年 LIKE :academic_year AND
+                   考试性质 LIKE :exam_nature
+           """)
+        db_results = db.session.execute(sql_query, {
+            'grade_year': grade_year,
+            'course_name_search': course_name_search,
+            'major': major,
+            'semester': semester,
+            'academic_year': academic_year,
+            'exam_nature': exam_nature,
+        })
+
+        violin_data = []
+        for class_id, grade, course_name in db_results:
+            if is_exam_course == '1':
+                try:
+                    grade = float(grade)
+                    violin_data.append({
+                        "courseName": course_name,
+                        "x": class_id,
+                        "y": grade
+                    })
+                except ValueError:
+                    # print('passed')
+                    pass
+            else:
+                mapped_score = Enrollment.map_score(grade)
+                if mapped_score is not None:
+                    violin_data.append({
+                        "courseName": course_name,
+                        "x": class_id,
+                        "y": mapped_score
+                    })
+
+        return violin_data
+
+    @staticmethod
+    def get_self_home_data(semester, academic_year, student_id):
+        semester = '%' + semester + '%'
+        academic_year = '%' + academic_year + '%'
+        student_id = student_id
+
+        sql_query = text("""
+            SELECT 
+                e.课程名称,
+                CASE 
+                    WHEN e.成绩 = '优秀' THEN 95
+                    WHEN e.成绩 = '良好' THEN 85
+                    WHEN e.成绩 = '中等' THEN 75
+                    WHEN e.成绩 = '及格' THEN 60
+                    WHEN e.成绩 = '通过' THEN 100
+                    WHEN e.成绩 = '不及格' THEN 0
+                    ELSE CAST(e.成绩 AS DECIMAL)
+                END AS 个人成绩,
+                AVG(
+                    CASE 
+                        WHEN e2.成绩 = '优秀' THEN 95
+                        WHEN e2.成绩 = '良好' THEN 85
+                        WHEN e2.成绩 = '中等' THEN 75
+                        WHEN e2.成绩 = '及格' THEN 60
+                        WHEN e2.成绩 = '通过' THEN 100
+                        WHEN e2.成绩 = '不及格' THEN 0
+                        ELSE CAST(e2.成绩 AS DECIMAL)
+                    END
+                ) AS 班级平均成绩,
+                AVG(
+                    CASE 
+                        WHEN e3.成绩 = '优秀' THEN 95
+                        WHEN e3.成绩 = '良好' THEN 85
+                        WHEN e3.成绩 = '中等' THEN 75
+                        WHEN e3.成绩 = '及格' THEN 60
+                        WHEN e3.成绩 = '通过' THEN 100
+                        WHEN e3.成绩 = '不及格' THEN 0
+                        ELSE CAST(e3.成绩 AS DECIMAL)
+                    END
+                ) AS 专业平均成绩
+            FROM 
+                enrollment e
+            LEFT JOIN 
+                enrollment e2 ON e.课程名称 = e2.课程名称 AND e.班级 = e2.班级
+            LEFT JOIN
+                enrollment e3 ON e.课程名称 = e3.课程名称 AND e.专业 = e3.专业
+            WHERE 
+                e.学期 LIKE :semester AND
+                e.学年 LIKE :academic_year AND
+                e.学号 LIKE :student_id
+            GROUP BY
+                e.课程名称, e.成绩
+        """)
+        db_results = db.session.execute(sql_query, {
+            'semester': semester,
+            'academic_year': academic_year,
+            'student_id': student_id,
+        })
+
+        radar_data = []
+        line_data = []
+        for subject, personal_score, class_avg_score, major_avg_score in db_results:
+            if personal_score is not None:
+                radar_data.append({
+                    "subject": subject,
+                    "type": "个人",
+                    "score": float(personal_score)
+                })
+                line_data.append({
+                    "subject": subject,
+                    "个人分数": float(personal_score),
+                    "班级平均分": float(class_avg_score) if class_avg_score else None,
+                    "专业平均分": float(major_avg_score) if major_avg_score else None
+                })
+            if class_avg_score is not None:
+                radar_data.append({
+                    "subject": subject,
+                    "type": "班级平均",
+                    "score": float(class_avg_score)
+                })
+
+        return {"radarData": radar_data, "lineData": line_data}

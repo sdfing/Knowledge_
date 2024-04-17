@@ -1,5 +1,27 @@
 import pandas as pd
 from database import db
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+def plot_violin(violin_data):
+    # 将数据转换为 pandas DataFrame
+    import pandas as pd
+    df = pd.DataFrame(violin_data)
+
+    # 绘制小提琴图
+    plt.figure(figsize=(10, 6))
+    sns.violinplot(x='classId', y='grade', data=df)
+
+    # 设置图表标题和标签
+    plt.title('各班级成绩分布')
+    plt.xlabel('班级')
+    plt.ylabel('成绩')
+
+    # 显示图表
+    plt.show()
+
+
+
 
 def trans(name):
     # 读取Excel文件
