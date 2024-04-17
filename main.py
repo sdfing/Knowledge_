@@ -4,12 +4,10 @@ from flask import redirect, url_for, request
 from sqlalchemy import text
 
 from database import db
-from models import Course, Enrollment,KnowledgePoint, KnowledgePointEdge
+from models import Course, Enrollment, KnowledgePoint, KnowledgePointEdge
 # 有向图结构
 from flask import jsonify
 from graph import g
-
-
 
 # 迫真主函数，来自c++的恶臭编程习惯，主启动部分要写的都写在这，免得东一块西一块
 ########################################################################
@@ -20,14 +18,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
 
-
-
 ##############################################################################
 
 # 登录登录
 @app.route('/')
 def default():
-    #g.save_to_database()
+    # g.save_to_database()
     # from dataTrans import dodododo
     # dodododo('21总表_updated','2022-2023')
 
@@ -39,8 +35,6 @@ def default():
 @app.route('/graph')
 def index():
     return render_template('graph.html')
-
-
 
 
 @app.route('/graphInfo/<course_id>')
@@ -74,6 +68,7 @@ def graphInfo(course_id):
     elements = nodes + edges
     # 返回 JSON 格式的数据
     return jsonify(elements)
+
 
 @app.route('/get_student_knowledge/<student_id>', methods=['GET'])
 def get_student_scores(student_id):
@@ -136,5 +131,3 @@ def student_main():
 # 如果这个文件是主程序，就运行flask应用
 if __name__ == '__main__':
     app.run(debug=True)
-
-

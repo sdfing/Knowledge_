@@ -9,6 +9,7 @@ class Course(db.Model):
     __tablename__ = 'course'
     id = db.Column(db.Integer, primary_key=True, name='课程代码')
     name = db.Column(db.String(64), unique=True, nullable=False, name='课程名称')
+
     # ... other course fields ...
 
     @staticmethod
@@ -44,6 +45,7 @@ class Course(db.Model):
 
     def __repr__(self):
         return '<Course %r>' % self.name
+
 
 class Student(db.Model):
     __tablename__ = 'student'  # 学生表名
@@ -181,7 +183,7 @@ class Enrollment(db.Model):
     course_type = db.Column(db.String(255), name='开课类型')
 
     @staticmethod
-    def rank_avg_gpa(self, major, grade):
+    def rank_avg_gpa(major, grade):
         from sqlalchemy import text
         sql_query = text("""
                SELECT 

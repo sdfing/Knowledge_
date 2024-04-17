@@ -1,6 +1,7 @@
 import pandas as pd
 from database import db
 
+
 def trans(name):
     # 读取Excel文件
     df = pd.read_excel(name)
