@@ -363,6 +363,9 @@ class Enrollment(db.Model):
         radar_data = []
         line_data = []
         for subject, personal_score, class_avg_score, major_avg_score in db_results:
+            #处理过长学科名称
+            if(len(subject)>8):
+                subject = subject[:4]+'..'+subject[-2:]
             if personal_score is not None:
                 radar_data.append({
                     "subject": subject,
