@@ -2,26 +2,62 @@ from flask import Flask, render_template, redirect, url_for, request, jsonify, s
 from flask_cors import CORS
 from sqlalchemy import text
 from database import db
-from models import Course, Enrollment, KnowledgePoint, KnowledgePointEdge, User, Student
+from models import Course, Enrollment, KnowledgePoint, KnowledgePointEdge, User, Student,StagePreYear
 from graph import g
 from api import api_blueprint
+from api import socketio
+from regression import  api_reg
+from dotenv import load_dotenv
+import os
 
 
 # 迫真主函数，来自c++的恶臭编程习惯，主启动部分要写的都写在这，免得东一块西一块
 ########################################################################
-# 创建一个flask应用对象
-app = Flask(__name__, template_folder='./static/templates')
-CORS(app)  # 添加CORS支持,允许跨域请求
-app.register_blueprint(api_blueprint) # 添加api
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Asd12345@127.0.0.1:3306/aaa'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.secret_key = 'Asd12345'  # 设置session密钥
+# 加载环境变量（优先从 .env 文件加载）
+load_dotenv()
 
-db.init_app(app)
+# 创建 Flask 应用实例
+def create_app():
+    app = Flask(__name__, template_folder='./static/templates')
+
+    # --------------------------
+    # 应用配置
+    # --------------------------
+    # 从环境变量读取敏感配置
+    app.config.update(
+        SECRET_KEY=os.getenv('SECRET_KEY', 'default_fallback_key'),  # 优先使用环境变量
+        SQLALCHEMY_DATABASE_URI=os.getenv('DATABASE_URL'),  # 例如：mysql://user:password@localhost/dbname
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        SQLALCHEMY_MAX_OVERFLOW=int(os.getenv('SQLALCHEMY_MAX_OVERFLOW', 100000)),
+        # SESSION_COOKIE_SECURE=True,  # 生产环境强制 HTTPS
+        # JSON_SORT_KEYS=False  # 保持 JSON 响应顺序
+    )
+
+    # --------------------------
+    # 注册扩展
+    # --------------------------
+    db.init_app(app)
+    socketio.init_app(app)  # 绑定 Socket.IO 到 app
+
+    # --------------------------
+    # 路由和蓝图
+    # --------------------------
+
+    # 注册 API 蓝图
+    app.register_blueprint(api_blueprint)
+    app.register_blueprint(api_reg)
+
+    # 添加 CORS 配置（可根据需要细化）
+    CORS(app)
 
 
+    return app
 
+# --------------------------
+# 应用实例化
+# --------------------------
+app = create_app()
 
 ##############################################################################
 
@@ -90,71 +126,13 @@ def default():
     # from dataTrans import plot_violin
     # # 调用绘图函数
     # plot_violin(violin_data)
-    return 'all done all fine'
 
+    # StagePreYear.update_stage_pre_year_from_excel("data/scoring.xlsx",'2023-2024')
 
-# 知识图谱喵
-@app.route('/graph')
-def graph():
-    course_name = request.args.get('course', '')
-    student_id = request.args.get('student', '')
-    return render_template('graph.html', course_name=course_name, student_id=student_id)
+    # Enrollment.calculate_credit_points(213401040113,"data/233.xlsx")
 
+    return "all done all clear"
 
-
-@app.route('/graphInfo/<course_id>')
-def graphInfo(course_id):
-    course_name = course_id  # 假设你想查询"数据结构"课程的知识点图
-    # 查询所有知识点
-    knowledge_points = KnowledgePoint.query.filter_by(KnowledgeBelong=course_name).all()
-    # 构建节点数据
-    nodes = []
-    for kp in knowledge_points:
-        node = {
-            'data': {
-                'id': str(kp.KnowledgeID),
-                'name': kp.KnowledgeName
-            }
-        }
-        nodes.append(node)
-    # 查询所有知识点边
-    knowledge_point_edges = KnowledgePointEdge.query.filter_by(KnowledgeBelong=course_name).all()
-    # 构建边数据
-    edges = []
-    for edge in knowledge_point_edges:
-        edge_data = {
-            'data': {
-                'source': str(edge.sourceID),
-                'target': str(edge.targetID)
-            }
-        }
-        edges.append(edge_data)
-    # 将节点和边数据合并
-    elements = nodes + edges
-    # 返回 JSON 格式的数据
-    return jsonify(elements)
-
-
-@app.route('/get_student_knowledge/<student_id>', methods=['GET'])
-def get_student_scores(student_id):
-    query = text("""
-        SELECT  kp.知识点id, kp.知识点名称, sk.分数
-        FROM student s
-        JOIN student_knowledge sk ON s.学号 = sk.学号
-        JOIN knowledge_point kp ON sk.知识点id = kp.知识点id
-        WHERE s.学号 = :student_id;
-    """)
-    result = db.session.execute(query, {'student_id': student_id})
-    result_list = []
-    print(result_list)
-    for row in result:
-        tmp = dict()
-        tmp['id'] = str(row[0])
-        tmp['名称'] = row[1]
-        tmp['分数'] = row[2]
-        result_list.append(tmp)
-    # 返回JSON数据
-    return jsonify(result_list)
 
 
 # 这个路由的用处是显示所有的课程
@@ -194,3 +172,4 @@ def get_students_average_gpa(major, grade):
 # 如果这个文件是主程序，就运行flask应用
 if __name__ == '__main__':
     app.run(debug=True)
+    socketio.run(app)

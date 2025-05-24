@@ -68,5 +68,26 @@ def dodododo(original_data, record_year):
     pass
 
 
-def trytry():
-    pass
+def caculate():
+    from scipy.special import comb
+
+    # 计算总的组合数
+    total_combinations = comb(200, 40, exact=True)
+
+    # 计算摸到1副炸弹的组合数和概率
+    one_bomb_combinations = comb(48, 1) * comb(196, 36)
+    probability_one_bomb = one_bomb_combinations / total_combinations
+
+    # 计算摸到2副炸弹的组合数和概率
+    two_bomb_combinations = comb(48, 2) * comb(192, 32)
+    probability_two_bomb = two_bomb_combinations / total_combinations
+
+    # 计算摸到3副炸弹的组合数和概率
+    three_bomb_combinations = comb(48, 3) * comb(188, 28)
+    probability_three_bomb = three_bomb_combinations / total_combinations
+
+    # 计算摸到4副炸弹的组合数和概率
+    four_bomb_combinations = comb(48, 4) * comb(184, 24)
+    probability_four_bomb = four_bomb_combinations / total_combinations
+
+    print(probability_one_bomb, probability_two_bomb, probability_three_bomb, probability_four_bomb)
